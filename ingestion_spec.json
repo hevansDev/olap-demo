@@ -1,0 +1,229 @@
+{
+  "type": "kafka",
+  "spec": {
+    "dataSchema": {
+      "dataSource": "adsb-json",
+      "timestampSpec": {
+        "column": "kafka.timestamp",
+        "format": "millis",
+        "missingValue": null
+      },
+      "dimensionsSpec": {
+        "dimensions": [
+          {
+            "type": "string",
+            "name": "hex_ident_val",
+            "multiValueHandling": "SORTED_ARRAY",
+            "createBitmapIndex": true
+          },
+          {
+            "type": "string",
+            "name": "squawk",
+            "multiValueHandling": "SORTED_ARRAY",
+            "createBitmapIndex": true
+          },
+          {
+            "type": "string",
+            "name": "client_id",
+            "multiValueHandling": "SORTED_ARRAY",
+            "createBitmapIndex": true
+          },
+          {
+            "type": "double",
+            "name": "client_lat",
+            "multiValueHandling": "SORTED_ARRAY",
+            "createBitmapIndex": false
+          },
+          {
+            "type": "double",
+            "name": "client_lon",
+            "multiValueHandling": "SORTED_ARRAY",
+            "createBitmapIndex": false
+          },
+          {
+            "type": "double",
+            "name": "client_alt",
+            "multiValueHandling": "SORTED_ARRAY",
+            "createBitmapIndex": false
+          },
+          {
+            "type": "double",
+            "name": "distance_to_aircraft",
+            "multiValueHandling": "SORTED_ARRAY",
+            "createBitmapIndex": false
+          }
+        ],
+        "dimensionExclusions": [
+          "__time",
+          "altitude",
+          "latitude",
+          "count",
+          "kafka.timestamp",
+          "ground_speed",
+          "track",
+          "vertical_rate",
+          "longitude"
+        ],
+        "includeAllDimensions": false,
+        "useSchemaDiscovery": false
+      },
+      "metricsSpec": [
+        {
+          "type": "count",
+          "name": "count"
+        },
+        {
+          "type": "doubleMax",
+          "name": "altitude",
+          "fieldName": "altitude"
+        },
+        {
+          "type": "doubleMax",
+          "name": "latitude",
+          "fieldName": "latitude"
+        },
+        {
+          "type": "doubleMax",
+          "name": "ground_speed",
+          "fieldName": "ground_speed"
+        },
+        {
+          "type": "doubleMax",
+          "name": "track",
+          "fieldName": "track"
+        },
+        {
+          "type": "doubleMax",
+          "name": "longitude",
+          "fieldName": "longitude"
+        },
+        {
+          "type": "doubleMax",
+          "name": "vertical_rate",
+          "fieldName": "vertical_rate"
+        }
+      ],
+      "granularitySpec": {
+        "type": "uniform",
+        "segmentGranularity": "DAY",
+        "queryGranularity": "SECOND",
+        "rollup": true,
+        "intervals": []
+      },
+      "transformSpec": {
+        "filter": null,
+        "transforms": [
+          {
+            "type": "expression",
+            "name": "distance_to_aircraft",
+            "expression": "(acos(((sin(toRadians(CAST(\"client_lat\", 'DOUBLE'))) * sin(toRadians(\"latitude\"))) + ((cos(toRadians(CAST(\"client_lat\", 'DOUBLE'))) * cos(toRadians(\"latitude\"))) * cos((toRadians(\"longitude\") - toRadians(CAST(\"client_lon\", 'DOUBLE'))))))) * 6371)"
+          }
+        ]
+      }
+    },
+    "ioConfig": {
+      "topic": "adsb-json",
+      "topicPattern": null,
+      "inputFormat": {
+        "type": "kafka",
+        "headerFormat": {
+          "type": "string",
+          "encoding": "UTF-8"
+        },
+        "keyFormat": {
+          "type": "regex",
+          "pattern": "([\\s\\S]*)",
+          "columns": [
+            "line"
+          ]
+        },
+        "valueFormat": {
+          "type": "json",
+          "keepNullColumns": false,
+          "assumeNewlineDelimited": false,
+          "useJsonNodeReader": false
+        },
+        "headerColumnPrefix": "kafka.header.",
+        "keyColumnName": "kafka.key",
+        "timestampColumnName": "kafka.timestamp",
+        "topicColumnName": "kafka.topic"
+      },
+      "replicas": 1,
+      "taskCount": 2,
+      "taskDuration": "PT3600S",
+      "consumerProperties": {
+        "bootstrap.servers": "pkc-p11xm.us-east-1.aws.confluent.cloud:9092",
+        "security.protocol": "SASL_SSL",
+        "sasl.mechanism": "PLAIN",
+        "sasl.jaas.config": "org.apache.kafka.common.security.plain.PlainLoginModule  required username=\"GUCTT3OPIN73B2CA\" password=\"w55cMKyEWKxRRGdPzE/882byvKMvKMmAzFi/4dRIE+3xHcZuE9VoD52m2gfoTuOz\";"
+      },
+      "autoScalerConfig": null,
+      "pollTimeout": 100,
+      "startDelay": "PT5S",
+      "period": "PT30S",
+      "useEarliestOffset": true,
+      "completionTimeout": "PT1800S",
+      "lateMessageRejectionPeriod": null,
+      "earlyMessageRejectionPeriod": null,
+      "lateMessageRejectionStartDateTime": null,
+      "configOverrides": null,
+      "idleConfig": null,
+      "stopTaskCount": 1,
+      "stream": "adsb-json",
+      "useEarliestSequenceNumber": true,
+      "type": "kafka"
+    },
+    "tuningConfig": {
+      "type": "kafka",
+      "appendableIndexSpec": {
+        "type": "onheap",
+        "preserveExistingMetrics": false
+      },
+      "maxRowsInMemory": 150000,
+      "maxBytesInMemory": 0,
+      "skipBytesInMemoryOverheadCheck": false,
+      "maxRowsPerSegment": 5000000,
+      "maxTotalRows": null,
+      "intermediatePersistPeriod": "PT10M",
+      "maxPendingPersists": 0,
+      "indexSpec": {
+        "bitmap": {
+          "type": "roaring"
+        },
+        "dimensionCompression": "lz4",
+        "stringDictionaryEncoding": {
+          "type": "utf8"
+        },
+        "metricCompression": "lz4",
+        "longEncoding": "longs"
+      },
+      "indexSpecForIntermediatePersists": {
+        "bitmap": {
+          "type": "roaring"
+        },
+        "dimensionCompression": "lz4",
+        "stringDictionaryEncoding": {
+          "type": "utf8"
+        },
+        "metricCompression": "lz4",
+        "longEncoding": "longs"
+      },
+      "reportParseExceptions": false,
+      "handoffConditionTimeout": 900000,
+      "resetOffsetAutomatically": false,
+      "segmentWriteOutMediumFactory": null,
+      "workerThreads": null,
+      "chatRetries": 8,
+      "httpTimeout": "PT10S",
+      "shutdownTimeout": "PT80S",
+      "offsetFetchPeriod": "PT30S",
+      "intermediateHandoffPeriod": "P2147483647D",
+      "logParseExceptions": false,
+      "maxParseExceptions": 2147483647,
+      "maxSavedParseExceptions": 0,
+      "skipSequenceNumberAvailabilityCheck": false,
+      "repartitionTransitionDuration": "PT120S"
+    }
+  },
+  "context": null
+}
