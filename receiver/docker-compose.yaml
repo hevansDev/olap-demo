@@ -1,26 +1,26 @@
-version: '3'
-
 services:
-  kafka-broker:
+  broker:
     image: apache/kafka:latest
-    container_name: kafka-broker
-    restart: unless-stopped
+    hostname: broker
+    container_name: broker
     ports:
       - 9092:9092
     environment:
-      - listeners=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      - advertised.listeners=PLAINTEXT://kafka:9092
-      - listener.security.protocol.map=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      - controller.listener.names=CONTROLLER
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka-broker:9092
-      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT
-      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092
-      - KAFKA_BROKER_ID=1
-      - KAFKA_NODE_ID=1
-      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka-broker:9093
-      - CLUSTER_ID=kafka-cluster
-      - KAFKA_PROCESS_ROLES=broker,controller
-      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
 
   ultrafeeder:
     image: ghcr.io/sdr-enthusiasts/docker-adsb-ultrafeeder
@@ -149,3 +149,15 @@ services:
       - BEASTHOST=ultrafeeder
       - FR24KEY=85fe761bbec41b2e
     dns_search: . # prevents rare connection issues related to a bug in docker and fr24feed
+
+  adsb-kafka-connector:
+    image: python:3.9
+    container_name: adsb-kafka-connector
+    restart: unless-stopped
+    depends_on:
+      - broker
+      - ultrafeeder
+    volumes:
+      - ./adsb-connector:/app
+    working_dir: /app
+    command: sh -c "pip install kafka-python && python connector.py"
