@@ -1,0 +1,54 @@
+volumes:
+  clickhouse_data: {}
+  grafana_storage: {}
+
+services:
+  clickhouse-server:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse-server
+    profiles: ["default","grafana"]
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    ports:
+      - "8123:8123"   # HTTP interface
+      - "9000:9000"   # Native TCP interface
+      - "9009:9009"   # Interserver communication port
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    environment:
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=ClickHousePassword
+      - CLICKHOUSE_DB=default
+
+  clickhouse-client:
+    image: clickhouse/clickhouse-client:latest
+    container_name: clickhouse-client
+    profiles: ["default","grafana"]
+    entrypoint: /bin/sleep
+    command: infinity
+    environment:
+      - CLICKHOUSE_HOST=clickhouse-server
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=ClickHousePassword
+    depends_on:
+      - clickhouse-server
+  
+  grafana:
+    depends_on:
+      - clickhouse-server
+    container_name: grafana
+    profiles: ["grafana"]
+    image: grafana/grafana:10.4.3
+    volumes:
+      - grafana_storage:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/dashboards
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - 3000:3000
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    restart: on-failure
+    user: root

@@ -1,0 +1,400 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafadruid-druid-datasource",
+        "uid": "ddlpoexpk0e80b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "series",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "lengthkm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.4.3",
+      "targets": [
+        {
+          "builder": {
+            "intervals": {
+              "intervals": [
+                "${__from:date:iso}/${__to:date:iso}"
+              ],
+              "type": "intervals"
+            },
+            "query": "SELECT TIME_FLOOR(\"__time\",'PT2M') AS \"__time\", \"client_id\", AVG(CAST(\"distance_to_aircraft\" AS DOUBLE)) AS \"distance_to_aircraft\" FROM \"adsb-json\" WHERE  \"__time\" >= MILLIS_TO_TIMESTAMP(${__from}) AND \"__time\" <= MILLIS_TO_TIMESTAMP(${__to}) AND \"client_id\" IN (${Receiver:sqlstring}) AND \"distance_to_aircraft\" IS NOT NULL GROUP BY 1, 2",
+            "queryType": "sql"
+          },
+          "datasource": {
+            "type": "grafadruid-druid-datasource",
+            "uid": "ddlpoexpk0e80b"
+          },
+          "expr": "{\"builder\":{\"queryType\":\"sql\",\"query\":\"SELECT TIME_FLOOR(\\\"__time\\\",'PT2M') AS \\\"__time\\\", \\\"client_id\\\", AVG(CAST(\\\"distance_to_aircraft\\\" AS DOUBLE)) AS \\\"distance_to_aircraft\\\" FROM \\\"adsb-json\\\" WHERE  \\\"__time\\\" >= MILLIS_TO_TIMESTAMP(${__from}) AND \\\"__time\\\" <= MILLIS_TO_TIMESTAMP(${__to}) AND \\\"client_id\\\" IN (${Receiver:sqlstring}) AND \\\"distance_to_aircraft\\\" IS NOT NULL GROUP BY 1, 2\",\"intervals\":{\"type\":\"intervals\",\"intervals\":[\"${__from:date:iso}/${__to:date:iso}\"]}},\"settings\":{}}",
+          "refId": "Distance to aircraft",
+          "settings": {}
+        }
+      ],
+      "title": "Average Horizontal Distance to Aircraft",
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafadruid-druid-datasource",
+        "uid": "ddlpoexpk0e80b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 2,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "hour\\client_id",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "builder": {
+            "intervals": {
+              "intervals": [
+                "${__from:date:iso}/${__to:date:iso}"
+              ],
+              "type": "intervals"
+            },
+            "query": "SELECT\n  TIME_EXTRACT(\"__time\",'hour') AS \"hour\",\n  COUNT (DISTINCT \"hex_ident_val\") AS \"aircraft tracked\",\n  \"client_id\"\nFROM \"adsb-json\"\nWHERE \"__time\" >= MILLIS_TO_TIMESTAMP(${__from}) AND \"__time\" <= MILLIS_TO_TIMESTAMP(${__to})\nAND \"client_id\" IN (${Receiver:sqlstring})\nGROUP BY 1, 3\n",
+            "queryType": "sql"
+          },
+          "datasource": {
+            "type": "grafadruid-druid-datasource",
+            "uid": "ddlpoexpk0e80b"
+          },
+          "expr": "{\"builder\":{\"queryType\":\"sql\",\"query\":\"SELECT\\n  TIME_EXTRACT(\\\"__time\\\",'hour') AS \\\"hour\\\",\\n  COUNT (DISTINCT \\\"hex_ident_val\\\") AS \\\"aircraft tracked\\\",\\n  \\\"client_id\\\"\\nFROM \\\"adsb-json\\\"\\nWHERE \\\"__time\\\" >= MILLIS_TO_TIMESTAMP(${__from}) AND \\\"__time\\\" <= MILLIS_TO_TIMESTAMP(${__to})\\nAND \\\"client_id\\\" IN (${Receiver:sqlstring})\\nGROUP BY 1, 3\\n\",\"intervals\":{\"type\":\"intervals\",\"intervals\":[\"${__from:date:iso}/${__to:date:iso}\"]}},\"settings\":{}}",
+          "refId": "A",
+          "settings": {}
+        }
+      ],
+      "title": "Aircraft Tracked by Hour",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "client_id",
+            "rowField": "hour",
+            "valueField": "aircraft tracked"
+          }
+        }
+      ],
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafadruid-druid-datasource",
+        "uid": "ddlpoexpk0e80b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 1,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 1,
+        "fullHighlight": false,
+        "groupWidth": 0.75,
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "hour",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "builder": {
+            "intervals": {
+              "intervals": [
+                "${__from:date:iso}/${__to:date:iso}"
+              ],
+              "type": "intervals"
+            },
+            "query": "SELECT\n  TIME_EXTRACT(\"__time\",'hour') AS \"hour\",\n  DS_GET_QUANTILE(DS_QUANTILES_SKETCH(\"altitude\"), 0.25) AS \"25percent\",\n  DS_GET_QUANTILE(DS_QUANTILES_SKETCH(\"altitude\"), 0.5) AS \"50percent\",\n  DS_GET_QUANTILE(DS_QUANTILES_SKETCH(\"altitude\"), 0.75) AS \"75percent\"\nFROM \"adsb-json\"\nWHERE  \"__time\" >= MILLIS_TO_TIMESTAMP(${__from}) AND \"__time\" <= MILLIS_TO_TIMESTAMP(${__to})\nAND \"client_id\" IN (${Receiver:sqlstring})\nGROUP BY 1",
+            "queryType": "sql"
+          },
+          "datasource": {
+            "type": "grafadruid-druid-datasource",
+            "uid": "ddlpoexpk0e80b"
+          },
+          "expr": "{\"builder\":{\"queryType\":\"sql\",\"query\":\"SELECT\\n  TIME_EXTRACT(\\\"__time\\\",'hour') AS \\\"hour\\\",\\n  DS_GET_QUANTILE(DS_QUANTILES_SKETCH(\\\"altitude\\\"), 0.25) AS \\\"25percent\\\",\\n  DS_GET_QUANTILE(DS_QUANTILES_SKETCH(\\\"altitude\\\"), 0.5) AS \\\"50percent\\\",\\n  DS_GET_QUANTILE(DS_QUANTILES_SKETCH(\\\"altitude\\\"), 0.75) AS \\\"75percent\\\"\\nFROM \\\"adsb-json\\\"\\nWHERE  \\\"__time\\\" >= MILLIS_TO_TIMESTAMP(${__from}) AND \\\"__time\\\" <= MILLIS_TO_TIMESTAMP(${__to})\\nAND \\\"client_id\\\" IN (${Receiver:sqlstring})\\nGROUP BY 1\",\"intervals\":{\"type\":\"intervals\",\"intervals\":[\"${__from:date:iso}/${__to:date:iso}\"]}},\"settings\":{}}",
+          "refId": "A",
+          "settings": {}
+        }
+      ],
+      "title": "Percentile altitude by hour",
+      "type": "barchart"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "grafadruid-druid-datasource",
+          "uid": "ddlpoexpk0e80b"
+        },
+        "definition": "{\"builder\":{\"queryType\":\"sql\",\"query\":\"SELECT\\n  \\\"client_id\\\"\\nFROM \\\"adsb-json\\\"\\nWHERE \\\"__time\\\" >= MILLIS_TO_TIMESTAMP(${__from}) AND \\\"__time\\\" <= MILLIS_TO_TIMESTAMP(${__to})\\nGROUP BY 1\\nORDER BY 1 DESC\",\"intervals\":{\"type\":\"intervals\",\"intervals\":[\"${__from:date:iso}/${__to:date:iso}\"]}},\"settings\":{}}",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "Receiver",
+        "options": [],
+        "query": {
+          "builder": {
+            "intervals": {
+              "intervals": [
+                "${__from:date:iso}/${__to:date:iso}"
+              ],
+              "type": "intervals"
+            },
+            "query": "SELECT\n  \"client_id\"\nFROM \"adsb-json\"\nWHERE \"__time\" >= MILLIS_TO_TIMESTAMP(${__from}) AND \"__time\" <= MILLIS_TO_TIMESTAMP(${__to})\nGROUP BY 1\nORDER BY 1 DESC",
+            "queryType": "sql"
+          },
+          "expr": "{\"builder\":{\"queryType\":\"sql\",\"query\":\"SELECT\\n  \\\"client_id\\\"\\nFROM \\\"adsb-json\\\"\\nWHERE \\\"__time\\\" >= MILLIS_TO_TIMESTAMP(${__from}) AND \\\"__time\\\" <= MILLIS_TO_TIMESTAMP(${__to})\\nGROUP BY 1\\nORDER BY 1 DESC\",\"intervals\":{\"type\":\"intervals\",\"intervals\":[\"${__from:date:iso}/${__to:date:iso}\"]}},\"settings\":{}}",
+          "settings": {}
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Flight Data by Time",
+  "uid": "edokmm2b6rk00e",
+  "version": 2,
+  "weekStart": ""
+}
