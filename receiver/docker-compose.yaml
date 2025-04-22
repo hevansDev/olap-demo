@@ -147,7 +147,7 @@ services:
       - 8754:8754
     environment:
       - BEASTHOST=ultrafeeder
-      - FR24KEY=85fe761bbec41b2e
+      - FR24KEY=${FR24KEY}
     dns_search: . # prevents rare connection issues related to a bug in docker and fr24feed
 
   adsb-kafka-connector:
