@@ -5,22 +5,28 @@ services:
     container_name: broker
     ports:
       - 9092:9092
+    volumes:
+      - ./kafka-config/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SASL_PLAINTEXT:SASL_PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,SASL_PLAINTEXT://broker:29093,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
-      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29094
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,SASL_PLAINTEXT://0.0.0.0:29093,CONTROLLER://broker:29094,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf"
 
   ultrafeeder:
     image: ghcr.io/sdr-enthusiasts/docker-adsb-ultrafeeder
@@ -147,7 +153,7 @@ services:
       - 8754:8754
     environment:
       - BEASTHOST=ultrafeeder
-      - FR24KEY=${FR24KEY}
+      - FR24KEY=${FR24_KEY}
     dns_search: . # prevents rare connection issues related to a bug in docker and fr24feed
 
   adsb-kafka-connector:
@@ -160,4 +166,9 @@ services:
     volumes:
       - ./adsb-connector:/app
     working_dir: /app
-    command: sh -c "pip install kafka-python && python connector.py"
+    environment:
+      - KAFKA_BROKER=broker:29093
+      - KAFKA_PRODUCER_USERNAME=producer
+      - KAFKA_PRODUCER_PASSWORD=producer-secret
+      - TOPIC_NAME=adsb-raw
+    command: sh -c "apt-get update && apt-get install -y librdkafka-dev && pip install confluent-kafka python-dotenv && python connector.py"

@@ -1,8 +1,7 @@
 import socket
 import time
-from kafka import KafkaProducer, KafkaAdminClient
-from kafka.admin import NewTopic
-from kafka.errors import KafkaError, TopicAlreadyExistsError
+from confluent_kafka import Producer, KafkaException, KafkaError
+from confluent_kafka.admin import AdminClient, NewTopic
 import json
 import datetime
 import os
@@ -22,41 +21,42 @@ SBS_HOST = os.getenv('SBS_HOST', 'ultrafeeder')
 SBS_PORT = int(os.getenv('SBS_PORT', 30003))
 
 # Configure connection to Kafka with SASL authentication
-KAFKA_BROKER = os.getenv('KAFKA_BROKER', 'broker:29092')
+KAFKA_BROKER = os.getenv('KAFKA_BROKER', 'broker:29093')
 KAFKA_TOPIC = os.getenv('TOPIC_NAME', 'adsb-raw')
 
 # Load credentials from environment variables
 KAFKA_USERNAME = os.getenv('KAFKA_PRODUCER_USERNAME', 'producer')
-KAFKA_PASSWORD = os.getenv('KAFKA_PRODUCER_PASSWORD', '')
+KAFKA_PASSWORD = os.getenv('KAFKA_PRODUCER_PASSWORD', 'producer-secret')
 
 def ensure_topic_exists():
     """Ensure that the Kafka topic exists"""
+    conf = {
+        'bootstrap.servers': KAFKA_BROKER,
+        'security.protocol': 'SASL_PLAINTEXT',
+        'sasl.mechanism': 'PLAIN',
+        'sasl.username': KAFKA_USERNAME,
+        'sasl.password': KAFKA_PASSWORD
+    }
+    
     try:
-        admin_client = KafkaAdminClient(
-            bootstrap_servers=KAFKA_BROKER,
-            security_protocol='SASL_PLAINTEXT',
-            sasl_mechanism='PLAIN',
-            sasl_plain_username=KAFKA_USERNAME,
-            sasl_plain_password=KAFKA_PASSWORD,
-            api_version=(2, 5, 0)
-        )
+        admin_client = AdminClient(conf)
+        topic_list = [NewTopic(KAFKA_TOPIC, num_partitions=1, replication_factor=1)]
         
-        # Create topic if it doesn't exist
-        topic = NewTopic(
-            name=KAFKA_TOPIC,
-            num_partitions=1,
-            replication_factor=1
-        )
+        # Create topics
+        fs = admin_client.create_topics(topic_list)
         
-        admin_client.create_topics([topic])
-        logger.info(f"Created topic: {KAFKA_TOPIC}")
-    except TopicAlreadyExistsError:
-        logger.info(f"Topic {KAFKA_TOPIC} already exists")
+        # Wait for operation to complete
+        for topic, f in fs.items():
+            try:
+                f.result()  # The result itself is None
+                logger.info(f"Created topic: {topic}")
+            except KafkaException as e:
+                if e.args[0].code() == KafkaError.TOPIC_ALREADY_EXISTS:
+                    logger.info(f"Topic {topic} already exists")
+                else:
+                    logger.error(f"Failed to create topic {topic}: {e}")
     except Exception as e:
         logger.error(f"Error creating topic: {e}")
-    finally:
-        if 'admin_client' in locals():
-            admin_client.close()
 
 def connect_to_sbs():
     """Connect to the SBS output from Ultrafeeder"""
@@ -71,28 +71,30 @@ def connect_to_sbs():
             time.sleep(5)
 
 def create_producer():
-    """Create and return a Kafka producer"""
+    """Create and return a Kafka producer using confluent-kafka"""
+    conf = {
+        'bootstrap.servers': KAFKA_BROKER,
+        'security.protocol': 'SASL_PLAINTEXT',
+        'sasl.mechanism': 'PLAIN',
+        'sasl.username': KAFKA_USERNAME,
+        'sasl.password': KAFKA_PASSWORD,
+        'client.id': 'adsb-producer'
+    }
+    
     try:
-        # Initialize Kafka producer with SASL authentication
-        producer = KafkaProducer(
-            bootstrap_servers=KAFKA_BROKER,
-            security_protocol='SASL_PLAINTEXT',
-            sasl_mechanism='PLAIN',
-            sasl_plain_username=KAFKA_USERNAME,
-            sasl_plain_password=KAFKA_PASSWORD,
-            value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-            api_version=(2, 5, 0),  # Compatible with newer Kafka versions
-            acks='all',  # Wait for all replicas to acknowledge
-            retries=5,   # Retry a few times before giving up
-            batch_size=16384,  # Batch size in bytes
-            linger_ms=100,  # Wait up to 100ms to batch messages
-            buffer_memory=33554432,  # 32MB buffer
-        )
+        producer = Producer(conf)
         logger.info(f"Connected to Kafka at {KAFKA_BROKER} on topic {KAFKA_TOPIC} as user {KAFKA_USERNAME}")
         return producer
     except Exception as e:
         logger.error(f"Failed to create Kafka producer: {e}")
         raise
+
+def delivery_report(err, msg):
+    """Called once for each message produced to indicate delivery result."""
+    if err is not None:
+        logger.error(f"Message delivery failed: {err}")
+    else:
+        logger.debug(f"Message delivered to {msg.topic()} [{msg.partition()}] at offset {msg.offset()}")
 
 def send_message(producer, message):
     """Send a message to Kafka with proper error handling"""
@@ -102,14 +104,31 @@ def send_message(producer, message):
     }
     
     try:
-        future = producer.send(KAFKA_TOPIC, msg_data)
-        # Block for 'synchronous' behavior to check for errors
-        record_metadata = future.get(timeout=10)
-        logger.debug(f"Message sent to {record_metadata.topic} partition {record_metadata.partition}, offset {record_metadata.offset}")
+        # Produce message
+        producer.produce(
+            KAFKA_TOPIC,
+            key=None,
+            value=json.dumps(msg_data).encode('utf-8'),
+            callback=delivery_report
+        )
+        # Serve delivery callbacks from previous produce calls
+        producer.poll(0)
         return True
-    except KafkaError as e:
+    except Exception as e:
         logger.error(f"Failed to send message to Kafka: {e}")
         return False
+
+def shutdown(producer, socket):
+    """Gracefully shut down resources"""
+    try:
+        logger.info("Shutting down producer...")
+        if producer:
+            # Wait for any outstanding messages to be delivered
+            producer.flush()
+        if socket:
+            socket.close()
+    except Exception as e:
+        logger.error(f"Error during shutdown: {e}")
 
 def main():
     # Check if credentials are available
@@ -168,11 +187,17 @@ def main():
             except:
                 pass
             sbs_socket = connect_to_sbs()
+    
+    return producer, sbs_socket
 
 if __name__ == "__main__":
+    producer = None
+    sbs_socket = None
     try:
-        main()
+        producer, sbs_socket = main()
     except KeyboardInterrupt:
-        logger.info("Shutting down...")
+        logger.info("Shutting down due to keyboard interrupt...")
+        shutdown(producer, sbs_socket)
     except Exception as e:
         logger.critical(f"Fatal error: {e}")
+        shutdown(producer, sbs_socket)
