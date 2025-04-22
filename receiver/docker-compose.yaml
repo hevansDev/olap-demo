@@ -4,25 +4,32 @@ services:
     hostname: broker
     container_name: broker
     ports:
-      - 9092:9092
+      - 9092:9092     # Expose external SASL port
     volumes:
       - ./kafka-config/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,SASL_PLAINTEXT:SASL_PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,SASL_PLAINTEXT://broker:29093,PLAINTEXT_HOST://localhost:9092
+      # Map listener names to security protocols
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:SASL_PLAINTEXT,EXTERNAL:SASL_PLAINTEXT,CONTROLLER:PLAINTEXT
+      # Define what addresses to advertise to clients
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://broker:29092,EXTERNAL://192.168.1.100:9092
+      # Basic Kafka configs
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      # KRaft mode settings
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29094
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,SASL_PLAINTEXT://0.0.0.0:29093,CONTROLLER://broker:29094,PLAINTEXT_HOST://0.0.0.0:9092
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      # Define interfaces and ports to listen on
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://broker:29093
+      # Internal communication between brokers (if you had multiple)
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      # SASL configuration
       KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
       KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
@@ -167,7 +174,7 @@ services:
       - ./adsb-connector:/app
     working_dir: /app
     environment:
-      - KAFKA_BROKER=broker:29093
+      - KAFKA_BROKER=broker:29092
       - KAFKA_PRODUCER_USERNAME=producer
       - KAFKA_PRODUCER_PASSWORD=producer-secret
       - TOPIC_NAME=adsb-raw
