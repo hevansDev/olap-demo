@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 # Configuration with SASL PLAIN
 conf = {
-    'bootstrap.servers': '192.168.0.17:9092',  # Host IP and port
+    'bootstrap.servers': 'kafka.hughevans.dev',  # Host IP and port
     'group.id': 'adsb-test-consumer',
     'auto.offset.reset': 'earliest',
     'security.protocol': 'SASL_PLAINTEXT',

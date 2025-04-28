@@ -1,3 +1,4 @@
 receiver/.env
 __pycache__
 kafka-config/kafka_server_jaas.conf
+.venv
