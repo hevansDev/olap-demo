@@ -1,0 +1,20 @@
+columns format version: 1
+18 columns:
+`hostname` LowCardinality(String)
+`event_date` Date
+`event_time` DateTime
+`event_time_microseconds` DateTime64(6)
+`LatencyEvent_S3FirstByteReadAttempt1Microseconds` Array(UInt64)
+`LatencyEvent_S3FirstByteWriteAttempt1Microseconds` Array(UInt64)
+`LatencyEvent_S3FirstByteReadAttempt2Microseconds` Array(UInt64)
+`LatencyEvent_S3FirstByteWriteAttempt2Microseconds` Array(UInt64)
+`LatencyEvent_S3FirstByteReadAttemptNMicroseconds` Array(UInt64)
+`LatencyEvent_S3FirstByteWriteAttemptNMicroseconds` Array(UInt64)
+`LatencyEvent_S3ConnectMicroseconds` Array(UInt64)
+`LatencyEvent_DiskS3FirstByteReadAttempt1Microseconds` Array(UInt64)
+`LatencyEvent_DiskS3FirstByteWriteAttempt1Microseconds` Array(UInt64)
+`LatencyEvent_DiskS3FirstByteReadAttempt2Microseconds` Array(UInt64)
+`LatencyEvent_DiskS3FirstByteWriteAttempt2Microseconds` Array(UInt64)
+`LatencyEvent_DiskS3FirstByteReadAttemptNMicroseconds` Array(UInt64)
+`LatencyEvent_DiskS3FirstByteWriteAttemptNMicroseconds` Array(UInt64)
+`LatencyEvent_DiskS3ConnectMicroseconds` Array(UInt64)
