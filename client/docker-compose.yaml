@@ -1,12 +1,16 @@
 volumes:
   clickhouse_data: {}
+  clickhouse_logs: {}
 
 services:
   clickhouse-server:
-    image: clickhouse/clickhouse-server:latest
+    image: clickhouse/clickhouse-server:25.4
     container_name: clickhouse-server
     volumes:
       - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+      - ./clickhouse_config/config.xml:/etc/clickhouse-server/config.xml
+      - ./clickhouse_config/users.xml:/etc/clickhouse-server/users.xml
     ports:
       - "8123:8123"   # HTTP interface
       - "9000:9000"   # Native TCP interface
@@ -19,15 +23,3 @@ services:
       - CLICKHOUSE_USER=default
       - CLICKHOUSE_PASSWORD=ClickHousePassword
       - CLICKHOUSE_DB=default
-
-  clickhouse-client:
-    image: clickhouse/clickhouse-client:latest
-    container_name: clickhouse-client
-    entrypoint: /bin/sleep
-    command: infinity
-    environment:
-      - CLICKHOUSE_HOST=clickhouse-server
-      - CLICKHOUSE_USER=default
-      - CLICKHOUSE_PASSWORD=ClickHousePassword
-    depends_on:
-      - clickhouse-server
