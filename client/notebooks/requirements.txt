@@ -1,3 +1,6 @@
-requests
+jupysql
+clickhouse_sqlalchemy
 pandas
 matplotlib
+scikit-learn
+sklearn_evaluation
