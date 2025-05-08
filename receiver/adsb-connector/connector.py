@@ -98,9 +98,34 @@ def delivery_report(err, msg):
 
 def send_message(producer, message):
     """Send a message to Kafka with proper error handling"""
+    parts = message.strip().split(',')
+    
     msg_data = {
         'raw_message': message,
-        'timestamp': datetime.datetime.now().isoformat()
+        'timestamp': datetime.datetime.now().isoformat(),
+        'message_type': parts[0],
+        'transmission_type': int(parts[1]),
+        'session_id': int(parts[2]),
+        'aircraft_id': int(parts[3]),
+        'hex_ident': parts[4],
+        'hex_ident_val': int(parts[5]),
+        'flight_id': parts[6],
+        'date_message_generated': parts[7],
+        'time_message_generated': parts[8],
+        'date_message_logged': parts[9],
+        'time_message_logged': parts[10] if parts[10] else None,
+        'callsign': parts[11] if parts[11] else None,
+        'altitude': int(parts[12]) if parts[12] else None,
+        'ground_speed': int(parts[13]) if parts[13] else None,
+        'track': parts[14] if parts[14] else None,
+        'latitude': parts[15] if parts[15] else None,
+        'longitude': parts[16] if parts[16] else None,
+        'vertical_rate': parts[17] if parts[17] else None,
+        'squawk': parts[18] if parts[18] else None,
+        'alert': parts[19] if parts[19] else None,
+        'emergency': parts[20] if parts[20] else None,
+        'spi': int(parts[21]) if parts[21] else None,
+        'is_on_ground': parts[22].strip() if len(parts) > 22 and parts[22] else None
     }
     
     try:
