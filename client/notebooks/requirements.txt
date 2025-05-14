@@ -1,6 +1,6 @@
-jupysql
-clickhouse_sqlalchemy
+clickhouse_connect
 pandas
-matplotlib
-scikit-learn
-sklearn_evaluation
+tabulate
+pygments
+ipython
+jupyter
