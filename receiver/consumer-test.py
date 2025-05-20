@@ -11,13 +11,13 @@ logger = logging.getLogger(__name__)
 
 # Configuration with SASL PLAIN
 conf = {
-    'bootstrap.servers': 'kafka.hughevans.dev',  # Host IP and port
+    'bootstrap.servers': 'your-kafka-bootstrap-server',  # Host IP and port
     'group.id': 'adsb-test-consumer',
     'auto.offset.reset': 'earliest',
     'security.protocol': 'SASL_PLAINTEXT',
     'sasl.mechanism': 'PLAIN',
     'sasl.username': 'consumer',
-    'sasl.password': 'consumer-secret',
+    'sasl.password': 'your-consumer-secret',
     'client.id': 'test-consumer'
 }
 

@@ -24,7 +24,7 @@
     <!-- Kafka configuration -->
     <kafka>
         <sasl_username>consumer</sasl_username>
-        <sasl_password>consumer-secret</sasl_password>
+        <sasl_password>your-consumer-secret</sasl_password>
         <security_protocol>sasl_plaintext</security_protocol>
         <sasl_mechanisms>PLAIN</sasl_mechanisms>
     </kafka>

@@ -1807,7 +1807,7 @@
 
     <kafka>
         <sasl_username>consumer</sasl_username>
-        <sasl_password>consumer-secret</sasl_password>
+        <sasl_password>your-consumer-secret</sasl_password>
         <security_protocol>SASL_PLAINTEXT</security_protocol>
         <sasl_mechanism>PLAIN</sasl_mechanism>
     </kafka>
